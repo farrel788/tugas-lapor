@@ -1,0 +1,30 @@
+/* Design token dari Figma: Kit UI · Lapor Sekolah */
+:root {
+  --color-white: #ffffff;
+  --color-surface: #f5f9ff;
+  --color-primary: #7fb2f0;
+  --color-active: #5c9be6;
+  --color-active-tint: #e8f1fd;
+  --color-text: #1f2a3c;
+  --color-secondary: #6b7a90;
+  --color-border: #e3ebf5;
+  --color-disabled: #edf1f6;
+
+  --badge-pending-bg: #fff4d6;   --badge-pending-fg: #b7791f;
+  --badge-proses-bg: #e3f0ff;    --badge-proses-fg: #2f6fbf;
+  --badge-selesai-bg: #e1f5ea;   --badge-selesai-fg: #2e8b57;
+  --badge-ditolak-bg: #fde7e7;   --badge-ditolak-fg: #c0392b;
+  --badge-rendah-bg: #f0f3f7;    --badge-rendah-fg: #6b7a90;
+  --badge-sedang-bg: #fff0e1;    --badge-sedang-fg: #a65e20;
+  --badge-mendesak-bg: #fde7e7;  --badge-mendesak-fg: #c0392b;
+
+  --color-link: #2f6fbf;
+  --color-error: #c0392b;
+
+  --radius: 12px;
+  --radius-badge: 6px;
+  --shadow-toast: 0 4px 20px rgba(31, 42, 60, 0.03);
+
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --btn-height: 48px;
+}
