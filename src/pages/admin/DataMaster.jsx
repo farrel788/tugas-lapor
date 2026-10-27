@@ -24,7 +24,9 @@ export default function DataMaster({ type }) {
   const cfg = CONFIG[type];
   const navigate = useNavigate();
   const [rows, setRows] = useState(null);
+  const [loadError, setLoadError] = useState('');
   const [kategori, setKategori] = useState([]);
+  const [kategoriError, setKategoriError] = useState('');
   const [q, setQ] = useState('');
   const [modal, setModal] = useState(null); // { mode: 'form' | 'hapus', row? }
   const [form, setForm] = useState({ nama: '', kategori: '' });
@@ -34,8 +36,15 @@ export default function DataMaster({ type }) {
 
   const muat = useCallback(() => {
     setRows(null);
-    listMaster(type).then(setRows).catch(() => setRows([]));
-    listMaster('kategori-area').then((k) => setKategori(k.map((x) => x.nama))).catch(() => {});
+    setLoadError('');
+    listMaster(type).then(setRows).catch((e) => {
+      setLoadError(e.message || 'Data master gagal dimuat.');
+      setRows([]);
+    });
+    listMaster('kategori-area').then((k) => {
+      setKategori(k.map((x) => x.nama));
+      setKategoriError('');
+    }).catch((e) => setKategoriError(e.message || 'Kategori induk gagal dimuat.'));
   }, [type]);
   useEffect(() => { muat(); setQ(''); setModal(null); }, [muat]);
 
@@ -96,7 +105,9 @@ export default function DataMaster({ type }) {
         <Button icon={Plus} onClick={() => buka(null)}>{cfg.add}</Button>
       </div>
 
-      {rows === null ? <Skeleton height={320} /> : tampil.length === 0 ? (
+      {rows === null ? <Skeleton height={320} /> : loadError ? (
+        <div className="card"><EmptyState title="Data gagal dimuat" message={loadError} /></div>
+      ) : tampil.length === 0 ? (
         <div className="card"><EmptyState title="Data tidak ditemukan" message={q ? 'Coba kata kunci lain.' : 'Belum ada data. Tambahkan data pertama Anda.'} /></div>
       ) : (
         <div className="table-wrap">
@@ -129,7 +140,8 @@ export default function DataMaster({ type }) {
             error={!form.nama.trim() && error ? error : ''} autoFocus />
           {cfg.parent && (
             <Select label="Kategori induk" placeholder="Pilih kategori" options={kategori} value={form.kategori}
-              onChange={(e) => setForm({ ...form, kategori: e.target.value })} error={form.nama.trim() && error ? error : ''} />
+              onChange={(e) => setForm({ ...form, kategori: e.target.value })}
+              error={kategoriError || (form.nama.trim() && error ? error : '')} />
           )}
           {error && form.nama.trim() && (!cfg.parent || form.kategori) && <p className="field__error">{error}</p>}
         </Modal>

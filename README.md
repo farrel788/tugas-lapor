@@ -49,6 +49,7 @@ Token dikirim via header `Authorization: Bearer <token>`.
 | Method | Endpoint | Body | Keterangan |
 |---|---|---|---|
 | POST | `/login` | `{ nisn, password }` atau `{ email, password }` | Login siswa / petugas |
+| POST | `/register` | `{ name, nisn, kelas, password, password_confirmation }` | Daftar akun siswa |
 
 ### Siswa — Laporan & Notifikasi (`src/services/reports.js`)
 | Method | Endpoint | Body | Keterangan |
@@ -57,10 +58,12 @@ Token dikirim via header `Authorization: Bearer <token>`.
 | GET | `/categories` | - | Ambil kategori, lokasi, jenis fasilitas |
 | GET | `/reports` | - | Daftar laporan |
 | GET | `/reports/{id}` | - | Detail laporan |
-| POST | `/reports` | multipart/form-data (`kategori`, `lokasi`, `jenis`, `deskripsi`, `urgensi`, `foto[]`) | Buat laporan |
+| POST | `/reports` | multipart/form-data (`location_id`, `facility_category_id`, `deskripsi`, `urgensi`, `foto[]`) | Buat laporan |
 | POST | `/reports/{reportId}/messages` | `{ message }` | Kirim pesan diskusi |
 | GET | `/notifications` | - | Ambil notifikasi |
 | POST | `/notifications/read-all` | - | Tandai semua notifikasi dibaca |
+
+Respons `GET /categories` untuk formulir siswa memuat `kategori` (kategori fasilitas dengan `id` dan `name`) serta `lokasi` (area yang berisi `locations` dengan `id` dan `name`). Formulir mengirim ID lokasi spesifik sebagai `location_id` dan ID kategori fasilitas sebagai `facility_category_id`.
 
 ### Admin (`src/services/admin.js`)
 | Method | Endpoint | Body | Keterangan |

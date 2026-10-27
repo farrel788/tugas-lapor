@@ -16,13 +16,21 @@ const INIT = { status: '', urgensi: '', kategori: '', rentang: 'default', q: '' 
 
 export default function LaporanAdmin() {
   const [reports, setReports] = useState(null);
+  const [loadError, setLoadError] = useState('');
   const [kategori, setKategori] = useState([]);
+  const [kategoriError, setKategoriError] = useState('');
   const [f, setF] = useState(INIT);
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    listAdminReports().then(setReports).catch(() => setReports([]));
-    listMaster('kategori-area').then((k) => setKategori(k.map((x) => ({ value: x.nama, label: x.nama })))).catch(() => {});
+    listAdminReports().then(setReports).catch((e) => {
+      setLoadError(e.message || 'Daftar laporan gagal dimuat.');
+      setReports([]);
+    });
+    listMaster('kategori-area').then((k) => {
+      setKategori(k.map((x) => ({ value: x.nama, label: x.nama })));
+      setKategoriError('');
+    }).catch((e) => setKategoriError(e.message || 'Filter kategori gagal dimuat.'));
   }, []);
   useEffect(() => { setPage(1); }, [f]);
 
@@ -51,6 +59,7 @@ export default function LaporanAdmin() {
 
       <section className="card">
         <h2 className="t-sub">Filter laporan</h2>
+        {kategoriError && <p className="field__error">{kategoriError}</p>}
         <div className="filter-row">
           <Select label="Status" placeholder="Semua status" options={STATUS} value={f.status} onChange={set('status')} />
           <Select label="Urgensi" placeholder="Semua urgensi" options={URGENSI} value={f.urgensi} onChange={set('urgensi')} />
@@ -68,16 +77,18 @@ export default function LaporanAdmin() {
 
       <div className="section-head">
         <h2 className="t-sub">Daftar laporan</h2>
-        <span className="t-caption">{filtered.length} laporan</span>
+        <span className="t-caption">{loadError ? 'Data tidak tersedia' : `${filtered.length} laporan`}</span>
       </div>
 
-      {reports === null ? <Skeleton height={360} /> : visible.length === 0 ? (
+      {reports === null ? <Skeleton height={360} /> : loadError ? (
+        <div className="card"><EmptyState title="Laporan gagal dimuat" message={loadError} /></div>
+      ) : visible.length === 0 ? (
         <div className="card"><EmptyState title="Tidak ada laporan" message="Coba ubah filter atau kata kunci pencarian." /></div>
       ) : <AdminReportTable reports={visible} />}
 
       <div className="pagination">
         <p className="footnote">
-          {filtered.length === 0 ? 'Tidak ada laporan' : `Menampilkan ${start + 1}–${start + visible.length} dari ${filtered.length} laporan`}
+          {loadError ? 'Daftar laporan gagal dimuat' : filtered.length === 0 ? 'Tidak ada laporan' : `Menampilkan ${start + 1}–${start + visible.length} dari ${filtered.length} laporan`}
         </p>
         <div className="pagination__pages">
           <button className="page-btn" disabled={page === 1} onClick={() => setPage(page - 1)} aria-label="Sebelumnya"><ChevronLeft size={16} /></button>

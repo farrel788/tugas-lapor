@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Info, Upload, Trash2, ImageIcon } from 'lucide-react';
+import { Info, Upload, Trash2, ImageIcon, CircleAlert } from 'lucide-react';
 import Button from '../../components/ui/Button.jsx';
 import Badge from '../../components/ui/Badge.jsx';
 import Toast from '../../components/ui/Toast.jsx';
 import { Select, Textarea } from '../../components/ui/Field.jsx';
 import { createReport, getKategori, getKuota } from '../../services/reports.js';
-import { buildKategori } from '../../services/mockAdmin.js';
 
 const URGENSI = [
   { value: 'rendah', desc: 'Tidak mengganggu kegiatan belajar.' },
@@ -21,29 +20,35 @@ export default function BuatLaporan() {
   const navigate = useNavigate();
   const fileRef = useRef(null);
   const [kategori, setKategori] = useState({});
+  const [kategoriError, setKategoriError] = useState('');
   const [kuota, setKuota] = useState(null);
+  const [kuotaError, setKuotaError] = useState('');
   const [form, setForm] = useState({ kategori: '', lokasi: '', jenis: '', deskripsi: '', urgensi: '' });
   const [foto, setFoto] = useState([]); // [{ file, url }]
   const [errors, setErrors] = useState({});
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState(null);
+  const fotoRef = useRef(foto);
+  fotoRef.current = foto;
 
   useEffect(() => {
-    getKategori().then(setKategori).catch(() => {
-      setKategori(buildKategori());
-    });
-    getKuota().then(setKuota).catch(() => {
-      setKuota({ limit: 2, terpakai: 0, sisa: 2 });
-    });
+    getKategori().then((data) => {
+      setKategori(data);
+      setKategoriError(Object.keys(data).length ? '' : 'Belum ada pilihan lokasi yang tersedia.');
+    }).catch((e) => setKategoriError(e.message || 'Pilihan lokasi gagal dimuat.'));
+    getKuota().then((data) => { setKuota(data); setKuotaError(''); })
+      .catch((e) => setKuotaError(e.message || 'Kuota gagal dimuat.'));
   }, []);
-  useEffect(() => () => foto.forEach((f) => URL.revokeObjectURL(f.url)), []); // eslint-disable-line
+  useEffect(() => () => fotoRef.current.forEach((f) => URL.revokeObjectURL(f.url)), []);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const pilihKategori = (e) => setForm((f) => ({ ...f, kategori: e.target.value, lokasi: '', jenis: '' }));
   const opsi = kategori[form.kategori] || {};
   const lokasi = opsi.lokasi || [];
   const jenis = opsi.jenis || [];
+  const namaOpsi = (items) => items.map((item) => typeof item === 'string' ? item : item.label).join(', ');
   const habis = kuota && kuota.sisa === 0;
+  const loadWarnings = [kategoriError, kuotaError].filter(Boolean).join(' ');
 
   const tambahFoto = (e) => {
     const err = [];
@@ -90,7 +95,8 @@ export default function BuatLaporan() {
     } catch (ex) {
       const isValidationError = [422, 429].includes(ex.status);
       setToast({ title: 'Laporan belum terkirim', message: isValidationError ? ex.message : 'Periksa koneksi Anda, lalu coba kembali.' });
-      getKuota().then(setKuota).catch(() => {});
+      getKuota().then((data) => { setKuota(data); setKuotaError(''); })
+        .catch((e) => setKuotaError(e.message || 'Kuota gagal dimuat.'));
     } finally {
       setSending(false);
     }
@@ -112,6 +118,10 @@ export default function BuatLaporan() {
         </div>
       </div>
 
+      {loadWarnings && (
+        <div className="banner banner--warn"><CircleAlert size={20} /><p>{loadWarnings}</p></div>
+      )}
+
       {kuota && (
         <div className={`banner banner--compact ${habis ? 'banner--warn' : ''}`}>
           <Info size={20} />
@@ -124,15 +134,15 @@ export default function BuatLaporan() {
         <div className="split__main">
           <section className="card">
             <h2 className="t-sub">Informasi fasilitas</h2>
-            <Select label="Lokasi *" value={form.kategori} onChange={pilihKategori}
+            <Select label="Lokasi *" value={form.kategori} onChange={pilihKategori} disabled={Boolean(kategoriError)}
               placeholder="Pilih kategori" options={Object.keys(kategori)} error={errors.kategori}
               hint={`Pilihan dari admin: ${Object.keys(kategori).join(', ')}.`} />
             <Select label="Lokasi Spesifik *" value={form.lokasi} onChange={set('lokasi')} disabled={!form.kategori}
               placeholder="Pilih lokasi" options={lokasi} error={errors.lokasi}
-              hint={form.kategori ? `Untuk ${form.kategori}: ${lokasi.join(', ')}. Pilihan mengikuti kategori.` : 'Pilih kategori terlebih dahulu.'} />
+              hint={form.kategori ? `Untuk ${form.kategori}: ${namaOpsi(lokasi)}. Pilihan mengikuti kategori.` : 'Pilih kategori terlebih dahulu.'} />
             <Select label="Jenis Fasilitas *" value={form.jenis} onChange={set('jenis')} disabled={!form.kategori}
               placeholder="Pilih jenis" options={jenis} error={errors.jenis}
-              hint={form.kategori ? `${jenis.join(', ')}, dan fasilitas lain sesuai lokasi.` : 'Pilih kategori terlebih dahulu.'} />
+              hint={form.kategori ? `${namaOpsi(jenis)}. Pilihan mengikuti kategori.` : 'Pilih kategori terlebih dahulu.'} />
           </section>
 
           <section className="card">

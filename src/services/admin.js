@@ -1,6 +1,7 @@
 import { api, USE_MOCK, ApiError } from './api.js';
 import { delay } from './mock.js';
 import { adminStore, master, trackingFor, ADMIN_NAME, TEKNISI, nowFull, nowChat } from './mockAdmin.js';
+import { normalizeReport, normalizeReports } from './reportMapper.js';
 
 const unwrap = (r) => (r && r.data !== undefined ? r.data : r);
 const clone = (v) => JSON.parse(JSON.stringify(v));
@@ -14,12 +15,12 @@ const withTracking = (r) => ({ ...clone(r), tracking: trackingFor(r) });
 // ---------- Laporan ----------
 export async function listAdminReports() {
   if (USE_MOCK) return delay(clone(adminStore.reports));
-  return unwrap(await api.get('/admin/reports'));
+  return normalizeReports(unwrap(await api.get('/admin/reports')));
 }
 
 export async function getAdminReport(id) {
   if (USE_MOCK) return delay(withTracking(find(id)));
-  return unwrap(await api.get(`/admin/reports/${id}`));
+  return normalizeReport(unwrap(await api.get(`/admin/reports/${id}`)));
 }
 
 export async function listTeknisi() {
@@ -37,7 +38,7 @@ export async function assignTeknisi(id, nama) {
     r.diperbarui = waktu;
     return delay(withTracking(r), 400);
   }
-  return unwrap(await api.post(`/admin/reports/${id}/assign`, { technician: nama }));
+  return normalizeReport(unwrap(await api.post(`/admin/reports/${id}/assign`, { technician: nama })));
 }
 
 export async function updateStatus(id, { status, catatan }) {
@@ -53,7 +54,7 @@ export async function updateStatus(id, { status, catatan }) {
     if (status === 'selesai') r.hasil = { teks: teks || 'Perbaikan telah diselesaikan.', waktu };
     return delay(withTracking(r), 400);
   }
-  return unwrap(await api.post(`/admin/reports/${id}/status`, { status, note: catatan }));
+  return normalizeReport(unwrap(await api.post(`/admin/reports/${id}/status`, { status, note: catatan })));
 }
 
 export async function sendAdminMessage(id, teks) {

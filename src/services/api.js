@@ -44,6 +44,9 @@ export const loginSiswa = async ({ nisn, password }) => {
   }
   return api.post('/login', { nisn, password });
 };
+export const registerSiswa = ({ name, nisn, kelas, password, password_confirmation }) =>
+  api.post('/register', { name, nisn, kelas, password, password_confirmation });
+
 export const loginPetugas = async ({ email, password }) => {
   if (USE_MOCK) {
     await new Promise((r) => setTimeout(r, 400));

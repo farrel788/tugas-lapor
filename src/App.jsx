@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './services/auth.jsx';
 import { SiswaLayout, AdminLayout, TeknisiLayout } from './components/layout/Layouts.jsx';
 import LoginSiswa from './pages/LoginSiswa.jsx';
+import RegisterSiswa from './pages/RegisterSiswa.jsx';
 import LoginPetugas from './pages/LoginPetugas.jsx';
 import DashboardSiswa from './pages/siswa/DashboardSiswa.jsx';
 import BuatLaporan from './pages/siswa/BuatLaporan.jsx';
@@ -21,6 +22,7 @@ export default function App() {
       <Routes>
         {/* Publik */}
         <Route path="/" element={<LoginSiswa />} />
+        <Route path="/register" element={<RegisterSiswa />} />
         <Route path="/petugas/login" element={<LoginPetugas />} />
 
         {/* Siswa */}

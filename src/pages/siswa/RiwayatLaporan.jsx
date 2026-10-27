@@ -24,12 +24,18 @@ export default function RiwayatLaporan() {
   const navigate = useNavigate();
   const location = useLocation();
   const [reports, setReports] = useState(null);
+  const [loadError, setLoadError] = useState('');
   const [tab, setTab] = useState('semua');
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
   const [toast, setToast] = useState(location.state?.toast || null); // state "Berhasil dikirim"
 
-  useEffect(() => { listReports().then(setReports).catch(() => setReports([])); }, []);
+  useEffect(() => {
+    listReports().then(setReports).catch((e) => {
+      setLoadError(e.message || 'Riwayat laporan gagal dimuat.');
+      setReports([]);
+    });
+  }, []);
   useEffect(() => { setPage(1); }, [tab, q]);
 
   const filtered = useMemo(() => {
@@ -63,6 +69,8 @@ export default function RiwayatLaporan() {
 
       {reports === null ? (
         <Skeleton height={320} />
+      ) : loadError ? (
+        <div className="card"><EmptyState title="Riwayat gagal dimuat" message={loadError} /></div>
       ) : reports.length === 0 ? (
         <div className="card"><EmptyState title="Belum ada laporan" message="Laporan yang Anda kirim akan muncul di sini."
           action={<Button icon={Plus} onClick={() => navigate('/siswa/buat-laporan')}>Buat Laporan Baru</Button>} /></div>

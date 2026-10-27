@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import AuthAbout from '../components/layout/AuthAbout.jsx';
 import Button from '../components/ui/Button.jsx';
 import Toast from '../components/ui/Toast.jsx';
@@ -11,6 +11,8 @@ export default function LoginSiswa() {
   const [form, setForm] = useState({ nisn: '', password: '' });
   const [errors, setErrors] = useState({});
   const [alert, setAlert] = useState('');
+  const location = useLocation();
+  const [notice, setNotice] = useState(location.state?.registrationNotice || '');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -51,6 +53,7 @@ export default function LoginSiswa() {
         </div>
 
         {alert && <Toast type="error" title="Tidak dapat masuk" message={alert} onClose={() => setAlert('')} />}
+        {notice && <Toast type="success" title="Pendaftaran berhasil" message={notice} onClose={() => setNotice('')} />}
 
         <div className="auth__fields">
           <Input
@@ -67,6 +70,7 @@ export default function LoginSiswa() {
         </div>
 
         <div className="auth__switch">
+          <Link to="/register" className="link-strong">Belum punya akun? Daftar</Link>
           <Link to="/petugas/login" className="link-strong">Masuk sebagai petugas</Link>
           <p className="t-caption">Kesulitan masuk? Hubungi admin sekolah.</p>
         </div>

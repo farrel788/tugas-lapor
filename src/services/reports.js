@@ -1,6 +1,7 @@
 import { api, USE_MOCK, ApiError } from './api.js';
 import { store, delay } from './mock.js';
 import { buildKategori } from './mockAdmin.js';
+import { normalizeReport, normalizeReports } from './reportMapper.js';
 
 const unwrap = (r) => (r && r.data !== undefined ? r.data : r);
 const clone = (v) => JSON.parse(JSON.stringify(v));
@@ -14,12 +15,56 @@ export async function getKuota() {
 
 export async function getKategori() {
   if (USE_MOCK) return delay(buildKategori(), 150);
-  return unwrap(await api.get('/categories'));
+  let result = unwrap(await api.get('/categories'));
+  // Laravel may wrap the payload in one or more `data`/`categories` properties.
+  for (let i = 0; i < 3 && result && !Array.isArray(result) && typeof result === 'object'; i += 1) {
+    const wrapped = result.data ?? result.categories;
+    if (wrapped === undefined || wrapped === result) break;
+    result = wrapped;
+  }
+
+  const options = (value) => Array.isArray(value)
+    ? value.map((item) => {
+      if (typeof item === 'string') return item;
+      const label = item?.nama ?? item?.name ?? item?.nama_lokasi ?? item?.nama_fasilitas;
+      return label ? { value: item.id ?? label, label } : null;
+    }).filter(Boolean)
+    : [];
+
+  if (!Array.isArray(result)) {
+    // API payload: kategori = facility types, lokasi = areas with child locations.
+    if (result && (Array.isArray(result.lokasi) || Array.isArray(result.kategori))) {
+      const responseTypes = options(result.jenis);
+      const facilityTypes = responseTypes.length ? responseTypes : options(result.kategori);
+      const grouped = Object.create(null);
+      (Array.isArray(result.lokasi) ? result.lokasi : []).forEach((area) => {
+        const areaName = area?.nama ?? area?.name;
+        if (!areaName) return;
+        grouped[areaName] = {
+          lokasi: options(area.lokasi ?? area.locations),
+          jenis: facilityTypes,
+        };
+      });
+      return grouped;
+    }
+    return result || {};
+  }
+
+  // Keep compatibility with APIs that already return grouped category rows.
+  return result.reduce((groups, row) => {
+    const name = row?.nama ?? row?.name ?? row?.kategori ?? row?.category;
+    if (!name) return groups;
+    groups[name] = {
+      lokasi: options(row.lokasi ?? row.locations ?? row.lokasis),
+      jenis: options(row.jenis ?? row.fasilitas ?? row.facilities ?? row.kategori_fasilitas),
+    };
+    return groups;
+  }, Object.create(null));
 }
 
 export async function listReports() {
   if (USE_MOCK) return delay(clone(store.reports));
-  return unwrap(await api.get('/reports'));
+  return normalizeReports(unwrap(await api.get('/reports')));
 }
 
 export async function getReport(id) {
@@ -28,7 +73,7 @@ export async function getReport(id) {
     if (!r) throw new ApiError('Laporan tidak ditemukan', 404);
     return delay(clone(r));
   }
-  return unwrap(await api.get(`/reports/${id}`));
+  return normalizeReport(unwrap(await api.get(`/reports/${id}`)));
 }
 
 export async function createReport({ kategori, lokasi, jenis, deskripsi, urgensi, foto }) {
@@ -54,9 +99,11 @@ export async function createReport({ kategori, lokasi, jenis, deskripsi, urgensi
     return clone(laporan);
   }
   const fd = new FormData();
-  Object.entries({ kategori, lokasi, jenis, deskripsi, urgensi }).forEach(([k, v]) => fd.append(k, v));
+  fd.append('location_id', lokasi);
+  fd.append('facility_category_id', jenis);
+  Object.entries({ deskripsi, urgensi }).forEach(([k, v]) => fd.append(k, v));
   foto.forEach((f) => fd.append('foto[]', f));
-  return unwrap(await api.post('/reports', fd));
+  return normalizeReport(unwrap(await api.post('/reports', fd)));
 }
 
 export async function sendMessage(reportId, teks) {

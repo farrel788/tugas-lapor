@@ -24,18 +24,26 @@ export default function DetailTugasTeknisi() {
   const fileRef = useRef(null);
   const [t, setT] = useState(null);
   const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [status, setStatus] = useState('diproses');
   const [catatan, setCatatan] = useState('');
   const [foto, setFoto] = useState([]);
+  const fotoRef = useRef(foto);
+  fotoRef.current = foto;
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
 
+  useEffect(() => () => fotoRef.current.forEach((file) => URL.revokeObjectURL(file.url)), []);
+
   useEffect(() => {
-    setT(null); setNotFound(false);
+    setT(null); setNotFound(false); setLoadError('');
     getTugas(id, user.name)
       .then((d) => { setT(d); setStatus(d.status === 'selesai' ? 'selesai' : 'diproses'); setCatatan(d.catatanTeknisi?.teks || ''); })
-      .catch(() => setNotFound(true));
+      .catch((e) => {
+        if (e.status === 404) setNotFound(true);
+        else setLoadError(e.message || 'Tugas gagal dimuat.');
+      });
   }, [id, user.name]);
 
   const tambahFoto = (e) => {
@@ -71,6 +79,10 @@ export default function DetailTugasTeknisi() {
     } finally { setSaving(false); }
   };
 
+  if (loadError) {
+    return <div className="card"><EmptyState title="Tugas gagal dimuat" message={loadError}
+      action={<Button variant="secondary" onClick={() => navigate('/teknisi')}>Kembali ke Dashboard</Button>} /></div>;
+  }
   if (notFound) {
     return <div className="card"><EmptyState title="Tugas tidak ditemukan" message="Tugas ini tidak ada atau bukan ditugaskan kepada Anda."
       action={<Button variant="secondary" onClick={() => navigate('/teknisi')}>Kembali ke Dashboard</Button>} /></div>;

@@ -1,6 +1,7 @@
 import { api, USE_MOCK, ApiError } from './api.js';
 import { delay } from './mock.js';
 import { adminStore, trackingFor, nowFull } from './mockAdmin.js';
+import { normalizeReport, normalizeReports } from './reportMapper.js';
 
 const unwrap = (r) => (r && r.data !== undefined ? r.data : r);
 const clone = (v) => JSON.parse(JSON.stringify(v));
@@ -12,12 +13,12 @@ const milik = (id, nama) => {
 
 export async function listTugas(nama) {
   if (USE_MOCK) return delay(clone(adminStore.reports.filter((r) => r.teknisi === nama)));
-  return unwrap(await api.get('/technician/tasks'));
+  return normalizeReports(unwrap(await api.get('/technician/tasks')));
 }
 
 export async function getTugas(id, nama) {
   if (USE_MOCK) { const r = milik(id, nama); return delay({ ...clone(r), tracking: trackingFor(r) }); }
-  return unwrap(await api.get(`/technician/tasks/${id}`));
+  return normalizeReport(unwrap(await api.get(`/technician/tasks/${id}`)));
 }
 
 export async function updateTugas(id, nama, { status, catatan, jumlahFoto }) {
@@ -35,5 +36,5 @@ export async function updateTugas(id, nama, { status, catatan, jumlahFoto }) {
     if (status === 'selesai') r.hasil = { teks, waktu };
     return { ...clone(r), tracking: trackingFor(r) };
   }
-  return unwrap(await api.post(`/technician/tasks/${id}/status`, { status, note: catatan }));
+  return normalizeReport(unwrap(await api.post(`/technician/tasks/${id}/status`, { status, note: catatan })));
 }

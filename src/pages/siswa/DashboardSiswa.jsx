@@ -16,9 +16,17 @@ export default function DashboardSiswa() {
   const [state, setState] = useState({ loading: true, error: '', reports: [], kuota: null });
 
   useEffect(() => {
-    Promise.all([listReports(), getKuota()])
-      .then(([reports, kuota]) => setState({ loading: false, error: '', reports, kuota }))
-      .catch((e) => setState({ loading: false, error: e.message, reports: [], kuota: null }));
+    Promise.allSettled([listReports(), getKuota()]).then(([reportsResult, quotaResult]) => {
+      const errors = [reportsResult, quotaResult]
+        .filter((result) => result.status === 'rejected')
+        .map((result) => result.reason?.message || 'Sebagian data gagal dimuat.');
+      setState({
+        loading: false,
+        error: errors.join(' '),
+        reports: reportsResult.status === 'fulfilled' ? reportsResult.value : [],
+        kuota: quotaResult.status === 'fulfilled' ? quotaResult.value : null,
+      });
+    });
   }, []);
 
   const { loading, error, reports, kuota } = state;

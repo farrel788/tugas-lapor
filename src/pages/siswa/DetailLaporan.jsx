@@ -6,6 +6,7 @@ import Tracking from '../../components/report/Tracking.jsx';
 import Button from '../../components/ui/Button.jsx';
 import Skeleton from '../../components/ui/Skeleton.jsx';
 import EmptyState from '../../components/ui/EmptyState.jsx';
+import Toast from '../../components/ui/Toast.jsx';
 import { Textarea } from '../../components/ui/Field.jsx';
 import { getReport, sendMessage } from '../../services/reports.js';
 
@@ -18,12 +19,17 @@ export default function DetailLaporan() {
   const navigate = useNavigate();
   const [r, setR] = useState(null);
   const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [pesan, setPesan] = useState('');
   const [sending, setSending] = useState(false);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
-    setR(null); setNotFound(false);
-    getReport(id).then(setR).catch(() => setNotFound(true));
+    setR(null); setNotFound(false); setLoadError('');
+    getReport(id).then(setR).catch((e) => {
+      if (e.status === 404) setNotFound(true);
+      else setLoadError(e.message || 'Laporan gagal dimuat.');
+    });
   }, [id]);
 
   const kirim = async () => {
@@ -33,9 +39,15 @@ export default function DetailLaporan() {
       const msg = await sendMessage(id, pesan.trim());
       setR((cur) => ({ ...cur, diskusi: [...cur.diskusi, msg] }));
       setPesan('');
+    } catch (e) {
+      setToast({ type: 'error', title: 'Pesan belum terkirim', message: e.message || 'Coba lagi.' });
     } finally { setSending(false); }
   };
 
+  if (loadError) {
+    return <div className="card"><EmptyState title="Laporan gagal dimuat" message={loadError}
+      action={<Button variant="secondary" onClick={() => navigate('/siswa/riwayat')}>Kembali ke Riwayat</Button>} /></div>;
+  }
   if (notFound) {
     return (
       <div className="card"><EmptyState title="Laporan tidak ditemukan" message="Laporan ini tidak ada atau bukan milik Anda."
@@ -46,6 +58,7 @@ export default function DetailLaporan() {
 
   return (
     <>
+      {toast && <div className="toast-stack"><Toast {...toast} onClose={() => setToast(null)} /></div>}
       <div className="page-top">
         <p className="crumb"><Link to="/siswa/riwayat">Riwayat Laporan</Link> / Detail laporan</p>
         <div className="page-head">
@@ -128,8 +141,8 @@ export default function DetailLaporan() {
           {r.teknisi && (
             <section className="card">
               <h2 className="t-sub">Teknisi penanggung jawab</h2>
-              <b>{r.teknisi.nama}</b>
-              <p className="footnote">{r.teknisi.info}</p>
+              <b>{typeof r.teknisi === 'string' ? r.teknisi : r.teknisi.nama ?? r.teknisi.name}</b>
+              <p className="footnote">{r.teknisiInfo || (typeof r.teknisi === 'object' ? r.teknisi.info : '')}</p>
             </section>
           )}
           <div className="hint-row"><Info size={18} /><p>Perubahan status dan balasan pengelola juga dikirim melalui notifikasi.</p></div>

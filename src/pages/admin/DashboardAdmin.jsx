@@ -15,9 +15,17 @@ export default function DashboardAdmin() {
   const [state, setState] = useState({ loading: true, error: '', reports: [], kategori: [] });
 
   useEffect(() => {
-    Promise.all([listAdminReports(), listMaster('kategori-area')])
-      .then(([reports, kategori]) => setState({ loading: false, error: '', reports, kategori }))
-      .catch((e) => setState({ loading: false, error: e.message, reports: [], kategori: [] }));
+    Promise.allSettled([listAdminReports(), listMaster('kategori-area')]).then(([reportsResult, categoriesResult]) => {
+      const errors = [reportsResult, categoriesResult]
+        .filter((result) => result.status === 'rejected')
+        .map((result) => result.reason?.message || 'Sebagian data gagal dimuat.');
+      setState({
+        loading: false,
+        error: errors.join(' '),
+        reports: reportsResult.status === 'fulfilled' ? reportsResult.value : [],
+        kategori: categoriesResult.status === 'fulfilled' ? categoriesResult.value : [],
+      });
+    });
   }, []);
 
   const { loading, error, reports, kategori } = state;

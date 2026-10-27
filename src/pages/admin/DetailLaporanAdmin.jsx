@@ -23,20 +23,30 @@ export default function DetailLaporanAdmin() {
   const fileRef = useRef(null);
   const [r, setR] = useState(null);
   const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [teknisiList, setTeknisiList] = useState([]);
+  const [teknisiError, setTeknisiError] = useState('');
   const [teknisi, setTeknisi] = useState('');
   const [status, setStatus] = useState('pending');
   const [catatan, setCatatan] = useState('');
   const [errors, setErrors] = useState({});
   const [foto, setFoto] = useState([]);
+  const fotoRef = useRef(foto);
+  fotoRef.current = foto;
   const [pesan, setPesan] = useState('');
   const [busy, setBusy] = useState('');
   const [toast, setToast] = useState(null);
 
+  useEffect(() => () => fotoRef.current.forEach((file) => URL.revokeObjectURL(file.url)), []);
+
   useEffect(() => {
-    setR(null); setNotFound(false);
-    getAdminReport(id).then((d) => { setR(d); setTeknisi(d.teknisi || ''); setStatus(d.status); }).catch(() => setNotFound(true));
-    listTeknisi().then(setTeknisiList).catch(() => {});
+    setR(null); setNotFound(false); setLoadError('');
+    getAdminReport(id).then((d) => { setR(d); setTeknisi(d.teknisi || ''); setStatus(d.status); }).catch((e) => {
+      if (e.status === 404) setNotFound(true);
+      else setLoadError(e.message || 'Laporan gagal dimuat.');
+    });
+    listTeknisi().then((data) => { setTeknisiList(data); setTeknisiError(''); })
+      .catch((e) => setTeknisiError(e.message || 'Daftar teknisi gagal dimuat.'));
   }, [id]);
 
   const tampil = (type, title, message) => setToast({ type, title, message });
@@ -86,6 +96,10 @@ export default function DetailLaporanAdmin() {
   };
   const hapusFoto = (i) => { URL.revokeObjectURL(foto[i].url); setFoto(foto.filter((_, idx) => idx !== i)); };
 
+  if (loadError) {
+    return <div className="card"><EmptyState title="Laporan gagal dimuat" message={loadError}
+      action={<Button variant="secondary" onClick={() => navigate('/admin/laporan')}>Kembali ke Laporan</Button>} /></div>;
+  }
   if (notFound) {
     return <div className="card"><EmptyState title="Laporan tidak ditemukan" message="Laporan ini tidak ada atau sudah dihapus."
       action={<Button variant="secondary" onClick={() => navigate('/admin/laporan')}>Kembali ke Laporan</Button>} /></div>;
@@ -181,7 +195,7 @@ export default function DetailLaporanAdmin() {
           <section className="card">
             <h2 className="t-sub">Tunjuk Teknisi</h2>
             <Select label="Teknisi penanggung jawab" placeholder="Pilih teknisi" options={teknisiList} value={teknisi}
-              onChange={(e) => setTeknisi(e.target.value)} hint={`Pilihan: ${teknisiList.join(', ')}.`} />
+              onChange={(e) => setTeknisi(e.target.value)} hint={teknisiError || `Pilihan: ${teknisiList.join(', ')}.`} />
             <Button variant="secondary" block loading={busy === 'tugas'} disabled={!teknisi || teknisi === r.teknisi} onClick={tugaskan}>Tugaskan</Button>
             {r.ditugaskan && <p className="footnote">{r.ditugaskan}</p>}
           </section>
