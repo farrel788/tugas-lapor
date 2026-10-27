@@ -6,7 +6,7 @@ import Badge from '../../components/ui/Badge.jsx';
 import Toast from '../../components/ui/Toast.jsx';
 import { Select, Textarea } from '../../components/ui/Field.jsx';
 import { createReport, getKategori, getKuota } from '../../services/reports.js';
-import { buildKategori } from '../services/mockAdmin.js';
+import { buildKategori } from '../../services/mockAdmin.js';
 
 const URGENSI = [
   { value: 'rendah', desc: 'Tidak mengganggu kegiatan belajar.' },
