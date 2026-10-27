@@ -6,6 +6,7 @@ import Badge from '../../components/ui/Badge.jsx';
 import Toast from '../../components/ui/Toast.jsx';
 import { Select, Textarea } from '../../components/ui/Field.jsx';
 import { createReport, getKategori, getKuota } from '../../services/reports.js';
+import { buildKategori } from '../services/mockAdmin.js';
 
 const URGENSI = [
   { value: 'rendah', desc: 'Tidak mengganggu kegiatan belajar.' },
@@ -28,14 +29,20 @@ export default function BuatLaporan() {
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
-    getKategori().then(setKategori).catch(() => {});
-    getKuota().then(setKuota).catch(() => {});
+    getKategori().then(setKategori).catch(() => {
+      setKategori(buildKategori());
+    });
+    getKuota().then(setKuota).catch(() => {
+      setKuota({ limit: 2, terpakai: 0, sisa: 2 });
+    });
   }, []);
   useEffect(() => () => foto.forEach((f) => URL.revokeObjectURL(f.url)), []); // eslint-disable-line
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const pilihKategori = (e) => setForm((f) => ({ ...f, kategori: e.target.value, lokasi: '', jenis: '' }));
-  const opsi = kategori[form.kategori] || { lokasi: [], jenis: [] };
+  const opsi = kategori[form.kategori] || {};
+  const lokasi = opsi.lokasi || [];
+  const jenis = opsi.jenis || [];
   const habis = kuota && kuota.sisa === 0;
 
   const tambahFoto = (e) => {
@@ -81,7 +88,8 @@ export default function BuatLaporan() {
         state: { toast: { title: 'Laporan berhasil dikirim', message: `Laporan #${r.id} menunggu verifikasi pengelola.` } },
       });
     } catch (ex) {
-      setToast({ title: 'Laporan belum terkirim', message: ex.status === 422 ? ex.message : 'Periksa koneksi Anda, lalu coba kembali.' });
+      const isValidationError = [422, 429].includes(ex.status);
+      setToast({ title: 'Laporan belum terkirim', message: isValidationError ? ex.message : 'Periksa koneksi Anda, lalu coba kembali.' });
       getKuota().then(setKuota).catch(() => {});
     } finally {
       setSending(false);
@@ -116,15 +124,15 @@ export default function BuatLaporan() {
         <div className="split__main">
           <section className="card">
             <h2 className="t-sub">Informasi fasilitas</h2>
-            <Select label="Kategori Fasilitas / Lokasi *" value={form.kategori} onChange={pilihKategori}
+            <Select label="Lokasi *" value={form.kategori} onChange={pilihKategori}
               placeholder="Pilih kategori" options={Object.keys(kategori)} error={errors.kategori}
               hint={`Pilihan dari admin: ${Object.keys(kategori).join(', ')}.`} />
             <Select label="Lokasi Spesifik *" value={form.lokasi} onChange={set('lokasi')} disabled={!form.kategori}
-              placeholder="Pilih lokasi" options={opsi.lokasi} error={errors.lokasi}
-              hint={form.kategori ? `Untuk ${form.kategori}: ${opsi.lokasi.join(', ')}. Pilihan mengikuti kategori.` : 'Pilih kategori terlebih dahulu.'} />
+              placeholder="Pilih lokasi" options={lokasi} error={errors.lokasi}
+              hint={form.kategori ? `Untuk ${form.kategori}: ${lokasi.join(', ')}. Pilihan mengikuti kategori.` : 'Pilih kategori terlebih dahulu.'} />
             <Select label="Jenis Fasilitas *" value={form.jenis} onChange={set('jenis')} disabled={!form.kategori}
-              placeholder="Pilih jenis" options={opsi.jenis} error={errors.jenis}
-              hint={form.kategori ? `${opsi.jenis.join(', ')}, dan fasilitas lain sesuai lokasi.` : 'Pilih kategori terlebih dahulu.'} />
+              placeholder="Pilih jenis" options={jenis} error={errors.jenis}
+              hint={form.kategori ? `${jenis.join(', ')}, dan fasilitas lain sesuai lokasi.` : 'Pilih kategori terlebih dahulu.'} />
           </section>
 
           <section className="card">

@@ -119,7 +119,7 @@ export default function DetailLaporanAdmin() {
             <div className="info-grid">
               <Info label="Nama siswa" value={r.pelapor} />
               <Info label="NISN / Kelas" value={`${r.nisn} / ${r.kelasPelapor}`} />
-              <Info label="Kategori Fasilitas / Lokasi" value={r.kategori} />
+              <Info label="Lokasi" value={r.kategori} />
               <Info label="Lokasi Spesifik" value={r.lokasi} />
               <Info label="Jenis Fasilitas" value={r.jenis} />
               <Info label="Tanggal dilaporkan" value={r.tanggalLengkap} />

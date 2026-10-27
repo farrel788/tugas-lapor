@@ -39,6 +39,50 @@ VITE_API_BASE_URL=http://localhost:8000/api
 ```
 Endpoint & bentuk respons yang diasumsikan ada di `src/services/reports.js` (sesuaikan dengan API tim).
 
+## Endpoint API
+
+Base URL: `http://localhost:8000/api` (dari `src/config.js`, bisa diubah lewat `.env` → `VITE_API_BASE_URL`).
+
+Token dikirim via header `Authorization: Bearer <token>`.
+
+### Auth
+| Method | Endpoint | Body | Keterangan |
+|---|---|---|---|
+| POST | `/login` | `{ nisn, password }` atau `{ email, password }` | Login siswa / petugas |
+
+### Siswa — Laporan & Notifikasi (`src/services/reports.js`)
+| Method | Endpoint | Body | Keterangan |
+|---|---|---|---|
+| GET | `/reports/quota` | - | Cek kuota laporan harian |
+| GET | `/categories` | - | Ambil kategori, lokasi, jenis fasilitas |
+| GET | `/reports` | - | Daftar laporan |
+| GET | `/reports/{id}` | - | Detail laporan |
+| POST | `/reports` | multipart/form-data (`kategori`, `lokasi`, `jenis`, `deskripsi`, `urgensi`, `foto[]`) | Buat laporan |
+| POST | `/reports/{reportId}/messages` | `{ message }` | Kirim pesan diskusi |
+| GET | `/notifications` | - | Ambil notifikasi |
+| POST | `/notifications/read-all` | - | Tandai semua notifikasi dibaca |
+
+### Admin (`src/services/admin.js`)
+| Method | Endpoint | Body | Keterangan |
+|---|---|---|---|
+| GET | `/admin/reports` | - | Daftar laporan |
+| GET | `/admin/reports/{id}` | - | Detail laporan |
+| GET | `/admin/technicians` | - | Daftar teknisi |
+| POST | `/admin/reports/{id}/assign` | `{ technician }` | Assign teknisi ke laporan |
+| POST | `/admin/reports/{id}/status` | `{ status, note }` | Update status laporan |
+| POST | `/admin/reports/{id}/messages` | `{ message }` | Kirim pesan diskusi |
+| GET | `/admin/master/{type}` | - | Data master (kategori / lokasi / fasilitas) |
+| POST | `/admin/master/{type}` | `{ name, category }` | Tambah data master |
+| PUT | `/admin/master/{type}/{id}` | `{ name, category }` | Edit data master |
+| DELETE | `/admin/master/{type}/{id}` | - | Hapus data master |
+
+### Teknisi (`src/services/teknisi.js`)
+| Method | Endpoint | Body | Keterangan |
+|---|---|---|---|
+| GET | `/technician/tasks` | - | Daftar tugas saya |
+| GET | `/technician/tasks/{id}` | - | Detail tugas |
+| POST | `/technician/tasks/{id}/status` | `{ status, note }` | Update status tugas (diproses / selesai) |
+
 ## Status konversi
 - [x] Kit UI (token + komponen dasar)
 - [x] Siswa: Login, Dashboard, Buat laporan, Riwayat, Detail laporan, Notifikasi

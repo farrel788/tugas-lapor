@@ -30,14 +30,19 @@ export const api = {
   del: (p) => request(p, { method: 'DELETE' }),
 };
 
-export const loginSiswa = async (nisn) => {
+export const loginSiswa = async ({ nisn, password }) => {
   if (USE_MOCK) {
     await new Promise((r) => setTimeout(r, 400));
-    if (nisn === '0000000000') throw new ApiError('NISN tidak ditemukan', 404);
-    const { MOCK_USER } = await import('./mock.js');
-    return { token: 'mock-token', user: { ...MOCK_USER, nisn } };
+    const SISWA = {
+      '1234567890': { id: 1, name: 'Baim Pratama', kelas: 'XII.PPLG.1' },
+      '1111111111': { id: 2, name: 'Yogi Fernando', kelas: 'XII.PPLG.1' },
+      '2222222222': { id: 3, name: 'Novril Yabai Tata', kelas: 'XII.PPLG.2' },
+    };
+    const user = SISWA[nisn];
+    if (!user || password !== 'password') throw new ApiError('NISN atau password salah', 401);
+    return { token: 'mock-token', user: { ...user, nisn } };
   }
-  return api.post('/login', { nisn });
+  return api.post('/login', { nisn, password });
 };
 export const loginPetugas = async ({ email, password }) => {
   if (USE_MOCK) {
@@ -53,3 +58,5 @@ export const loginPetugas = async ({ email, password }) => {
   }
   return api.post('/login', { email, password });
 };
+
+

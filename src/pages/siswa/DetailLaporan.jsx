@@ -62,7 +62,7 @@ export default function DetailLaporan() {
             <div className="info-grid">
               <Info1 label="Pelapor" value={r.pelapor} />
               <Info1 label="Kelas pelapor" value={r.kelasPelapor} />
-              <Info1 label="Kategori Fasilitas / Lokasi" value={r.kategori} />
+              <Info1 label="Lokasi" value={r.kategori} />
               <Info1 label="Lokasi Spesifik" value={r.lokasi} />
               <Info1 label="Jenis Fasilitas" value={r.jenis} />
               <Info1 label="Tanggal dilaporkan" value={r.tanggalLengkap} />
